@@ -1,12 +1,19 @@
 import numpy as np
 from scipy.stats import multivariate_normal
+import os
+import pickle
 
 
 class ObjectSample:
-    def __init__(self):
+    def __init__(self, data_file=None):
         self.data = []
         self.sd = None
         self.mean = None
+        self.data_file = data_file
+
+        if data_file is not None and os.path.isfile(data_file):
+            self.data = pickle.load(open(data_file, "rb"))
+            self.calculate_stats()
 
     def calculate_stats(self):
         if self.data is None:
@@ -38,3 +45,7 @@ class ObjectSample:
         pdf = np.exp(pdf_exp)*coef
         pdf = np.prod(pdf)
         return pdf**np.power(10, 12)
+
+    def save(self):
+        if self.data_file is not None:
+            pickle.dump(self.data, open(self.data_file, "wb"))
