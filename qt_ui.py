@@ -10,8 +10,7 @@ from PyQt5.QtWidgets import QApplication, QLabel, QPushButton, QVBoxLayout, QWid
     QSizePolicy, QMessageBox, QHBoxLayout
 from PyQt5.QtCore import Qt, QStringListModel, QSize, QTimer
 
-import os
-import cv2
+from detection_controller import DetectionController
 
 
 class UI_Window(QWidget):
@@ -44,13 +43,21 @@ class UI_Window(QWidget):
 
         layout.addLayout(button_layout)
 
-        # Add a label
-        self.label = QLabel()
-        self.label.setFixedSize(640, 480)
-        layout.addWidget(self.label)
+        # Add a label to hold raw image
+        self.raw_frame = QLabel()
+        self.raw_frame.setFixedSize(640, 360)
+        layout.addWidget(self.raw_frame)
+
+        # Add a label to hold filtered image
+        self.filtered_frame = QLabel()
+        self.filtered_frame.setFixedSize(640, 360)
+        layout.addWidget(self.filtered_frame)
 
         # Set last frame
         self.last_frame = None
+
+        # Create controller
+        self.det_controller = DetectionController()
 
         # Add a text area
         self.results = QTextEdit()
@@ -74,9 +81,9 @@ class UI_Window(QWidget):
 
     def resizeImage(self, filename):
         pixmap = QPixmap(filename)
-        lwidth = self.label.maximumWidth()
+        lwidth = self.raw_frame.maximumWidth()
         pwidth = pixmap.width()
-        lheight = self.label.maximumHeight()
+        lheight = self.raw_frame.maximumHeight()
         pheight = pixmap.height()
 
         wratio = pwidth * 1.0 / lwidth
@@ -101,23 +108,12 @@ class UI_Window(QWidget):
                                                "Barcode images (*)")
         # Show barcode images
         pixmap = self.resizeImage(filename[0])
-        self.label.setPixmap(pixmap)
+        self.raw_frame.setPixmap(pixmap)
 
         # Read barcodes
         self.readBarcode(filename[0])
 
     def openCamera(self):
-        self.vc = cv2.VideoCapture(0)
-        # vc.set(5, 30)  #set FPS
-        self.vc.set(3, 640)  # set width
-        self.vc.set(4, 480)  # set height
-
-        if not self.vc.isOpened():
-            msgBox = QMessageBox()
-            msgBox.setText("Failed to open camera.")
-            msgBox.exec_()
-            return
-
         self.timer.start(1000. / 24)
 
     def stopCamera(self):
@@ -126,17 +122,25 @@ class UI_Window(QWidget):
     def getPos(self, event):
         x = event.pos().x()
         y = event.pos().y()
-        print(x, y, self.last_frame[y, x])
+        self.det_controller.handle_click(x, y)
 
         # https://stackoverflow.com/questions/41103148/capture-webcam-video-using-pyqt
     def nextFrameSlot(self):
-        rval, frame = self.vc.read()
-        self.last_frame = frame
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        image = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
-        pixmap = QPixmap.fromImage(image)
-        self.label.setPixmap(pixmap)
-        self.label.mousePressEvent = self.getPos
+        # Get frames
+        raw, filtered = self.det_controller.process_frame()
+
+        # Convert to QImage
+        raw_image = QImage(raw, raw.shape[1], raw.shape[0], QImage.Format_RGB888)
+        filtered_image = QImage(filtered, filtered.shape[1], filtered.shape[0], QImage.Format_RGB888)
+
+        # Add to frame as pixmap
+        raw_pixmap = QPixmap.fromImage(raw_image)
+        filtered_pixmap = QPixmap.fromImage(filtered_image)
+        self.raw_frame.setPixmap(raw_pixmap)
+        self.filtered_frame.setPixmap(filtered_pixmap)
+
+        # Add click handler
+        self.raw_frame.mousePressEvent = self.getPos
 
 
 def main():

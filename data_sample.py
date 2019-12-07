@@ -1,11 +1,18 @@
 import numpy as np
-from scipy.stats import multivariate_normal
 import os
 import pickle
 
 
 class DataSample:
+    """
+    Handles a sample of data to evaluate against
+    """
     def __init__(self, input_data=None):
+        """
+        Builds a sample
+        :param input_data: File to get data from
+        """
+        print("Initializing!!!")
         self.data = []
         if input_data is not None:
             self.data = input_data
@@ -18,6 +25,10 @@ class DataSample:
             self.calculate_stats()
 
     def calculate_stats(self):
+        """
+        Calculates mean and deviation of model
+        :return: None
+        """
         if self.data is None:
             return
         data_array = np.array(self.data)
@@ -25,14 +36,31 @@ class DataSample:
         self.sd = np.std(data_array, axis=0)
 
     def add_data(self, new_data_point):
+        """
+        Adds a data point to the model
+        :param new_data_point: New data point
+        :return:
+        """
+        # Check data size
+        if len(self.data) > 0 and len(self.data[0]) != len(new_data_point):
+            raise Exception("Data point size does not match sample")
+        # Add to library
         self.data.append(new_data_point)
 
     def to_export(self):
         if self.data_file is not None:
             pickle.dump(self.data, open(self.data_file, "wb"))
 
+    # def __getstate__(self):
+    #     """
+    #     Builds a representation of the sample to pickle
+    #     :return: Representation of the sample
+    #     """
+    #     state = {'data': self.data}
+    #     return state
 
-class PixelSample(DataSample):
+
+class ColorSample(DataSample):
 
     def process_image(self, image):
         if len(self.data) < 10:
@@ -46,10 +74,21 @@ class PixelSample(DataSample):
         return pdf
 
 
-class ObjectSample(DataSample):
-    def __init__(self, input_data=None, object_name=None):
+class ComponentSample(DataSample):
+    def __init__(self, input_data=None, component_name=None):
         super_data = None
         if input_data is not None:
             super_data = input_data['stuff']
         super().__init__(input_data)
-        self.object_name = object_name
+        self.component_name = component_name
+        self.color = ColorSample()
+
+    # def __getstate__(self):
+    #     """
+    #     Builds a representation of the sample to pickle
+    #     :return: Representation of the sample
+    #     """
+    #     state = super().__getstate__()
+    #     state['obj_name'] = self.component_name
+    #     state['color'] = self.color
+    #     return state

@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from enum import Enum
+from visual_object import Leprechaun
 
 
 class InteractionMode(Enum):
@@ -19,6 +20,7 @@ class DetectionController:
         self.processed_frame = None  # Processed output frame
         self.vc = cv2.VideoCapture(0)  # Camera
 
+        self.object = Leprechaun()
         self.mode = InteractionMode.COMPOSITE  # Track how the user is interacting
         self.selected_component = None  # Track the current
 
@@ -32,13 +34,16 @@ class DetectionController:
         :param y: y coord of click
         :return: None
         """
-        print(f"Click at {(y, x)} with hsv value {self.hsv_frame[y, x]}"
+        print(f"Click at {(y, x)} with hsv value {self.hsv_frame[y, x]} "
               f"and processed value {self.processed_frame[y, x]}")
 
     def process_frame(self):
         """
         Pulls and processes the next frame
-        :return: Filtered frame
+        :return: raw and processed frames
         """
         ret, self.bgr_frame = self.vc.read()  # Read frame
+        rgb_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2RGB)
         self.hsv_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2HSV)  # Convert to HSV
+        self.processed_frame = self.hsv_frame
+        return rgb_frame, self.processed_frame
