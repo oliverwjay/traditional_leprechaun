@@ -39,20 +39,21 @@ class DetectionController:
         self.object.components[self.selected_component].color.add_data(self.hsv_frame[y, x])
         self.object.components[self.selected_component].color.calculate_stats()
 
-    def set_open_size(self, new_size):
+    def set_slider(self, slider_name, new_size):
         """
         Changes the kernal size to open for a the selected component
+        :param slider_name: Name of the slider to change
         :param new_size: The new size for the opening kernel
         :return: None
         """
-        self.object.components[self.selected_component].color.open_kernel_size = new_size
+        self.object.components[self.selected_component].color.slider_stats[slider_name] = new_size
 
-    def get_open_size(self):
+    def get_slider_values(self):
         """
         Returns the size of the opening kernel for the selected kernel
         :return: size of the opening kernel for the selected kernel
         """
-        return self.object.components[self.selected_component].color.open_kernel_size
+        return self.object.components[self.selected_component].color.slider_stats
 
     def process_frame(self):
         """

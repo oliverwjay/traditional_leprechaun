@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 import os
 import pickle
 
@@ -60,10 +61,15 @@ class DataSample:
     #     return state
 
 
+def make_kernel(k_size):
+    k_size = k_size + (k_size % 2 == 0)
+    return np.ones((k_size, k_size), np.uint8)
+
+
 class ColorSample(DataSample):
     def __init__(self, input_data=None):
         super().__init__(input_data)
-        self.open_kernel_size = 0
+        self.slider_stats = {'open': 0, 'close': 0, 'blur': 0, 'scale': 50}
 
     def process_image(self, image):
         if len(self.data) < 10:
@@ -74,7 +80,9 @@ class ColorSample(DataSample):
         pdf = np.exp(pdf_exp)*coef
         pdf = np.prod(pdf, axis=2)*np.power(10, 12)
         pdf = np.array(np.minimum(pdf, 255), dtype=np.uint8)
-        return pdf
+
+        opened = cv2.morphologyEx(pdf, cv2.MORPH_CLOSE, make_kernel(self.slider_stats['open']))
+        return opened
 
 
 class ComponentSample(DataSample):
