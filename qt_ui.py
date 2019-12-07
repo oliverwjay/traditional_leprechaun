@@ -7,7 +7,7 @@ import sys
 from PyQt5.QtGui import QPixmap, QImage
 
 from PyQt5.QtWidgets import QApplication, QLabel, QPushButton, QVBoxLayout, QWidget, QFileDialog, QTextEdit, \
-    QSizePolicy, QMessageBox, QHBoxLayout
+    QSizePolicy, QMessageBox, QHBoxLayout, QRadioButton
 from PyQt5.QtCore import Qt, QStringListModel, QSize, QTimer
 
 from detection_controller import DetectionController
@@ -43,15 +43,19 @@ class UI_Window(QWidget):
 
         layout.addLayout(button_layout)
 
+        center_layout = QHBoxLayout()
+        left_layout = QVBoxLayout()
+        right_layout = QVBoxLayout()
+
         # Add a label to hold raw image
         self.raw_frame = QLabel()
         self.raw_frame.setFixedSize(640, 360)
-        layout.addWidget(self.raw_frame)
+        left_layout.addWidget(self.raw_frame)
 
         # Add a label to hold filtered image
         self.filtered_frame = QLabel()
         self.filtered_frame.setFixedSize(640, 360)
-        layout.addWidget(self.filtered_frame)
+        left_layout.addWidget(self.filtered_frame)
 
         # Set last frame
         self.last_frame = None
@@ -59,14 +63,35 @@ class UI_Window(QWidget):
         # Create controller
         self.det_controller = DetectionController()
 
+        # Create radio buttons
+        for i, comp in enumerate(self.det_controller.object.components.keys()):
+            radiobutton = QRadioButton(comp)
+            if i == 0:
+                radiobutton.setChecked(False)
+                self.det_controller.selected_component = comp
+            radiobutton.component = comp
+            radiobutton.toggled.connect(self.compChanged)
+            right_layout.addWidget(radiobutton)
+
         # Add a text area
         self.results = QTextEdit()
-        layout.addWidget(self.results)
+        right_layout.addWidget(self.results)
+
+        # Merge layouts
+        center_layout.addLayout(left_layout)
+        center_layout.addLayout(right_layout)
+        layout.addLayout(center_layout)
 
         # Set the layout
         self.setLayout(layout)
         self.setWindowTitle("Leprechaun Detector")
-        self.setFixedSize(800, 800)
+        self.setFixedSize(1000, 900)
+
+    def compChanged(self):
+        radiobutton = self.sender()
+        if radiobutton.isChecked():
+            print(f"Changed to {radiobutton.component}")
+            self.det_controller.selected_component = radiobutton.component
 
     def closeEvent(self, event):
         msg = "Close the app?"
@@ -118,6 +143,7 @@ class UI_Window(QWidget):
 
     def stopCamera(self):
         self.timer.stop()
+        self.det_controller.object.save()
 
     def getPos(self, event):
         x = event.pos().x()

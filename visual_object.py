@@ -14,26 +14,26 @@ class VisualObject:
 
         # Read model from file
         if data_file is not None and path.isfile(data_file):
-            raw_component_data = pickle.load(open(data_file, "rb"))
+            self.components = pickle.load(open(data_file, "rb"))
         else:  # Create empty model if needed
             raw_component_data = dict()
 
-        # Update raw data to match given names
-        if component_names is not None:
-            # Add missing components
-            for component in component_names:
-                if component not in raw_component_data.keys():
-                    raw_component_data[component] = None
+            # Update raw data to match given names
+            if component_names is not None:
+                # Add missing components
+                for component in component_names:
+                    if component not in raw_component_data.keys():
+                        raw_component_data[component] = None
 
-            # Remove unneeded component names
-            for component in raw_component_data.keys():
-                if component not in component_names:
-                    del raw_component_data[component]
+                # Remove unneeded component names
+                for component in raw_component_data.keys():
+                    if component not in component_names:
+                        del raw_component_data[component]
 
-        # Build class structure from raw data
-        self.components = dict()  # Dictionary to contain component samples
-        for component, data in raw_component_data.items():  # Populate
-            self.components[component] = ComponentSample(data, component)  # Create object from data
+            # Build class structure from raw data
+            self.components = dict()  # Dictionary to contain component samples
+            for component, data in raw_component_data.items():  # Populate
+                self.components[component] = ComponentSample(data, component)  # Create object from data
 
     def save(self):
         """

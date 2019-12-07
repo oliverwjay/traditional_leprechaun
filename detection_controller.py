@@ -36,8 +36,8 @@ class DetectionController:
         """
         print(f"Click at {(y, x)} with hsv value {self.hsv_frame[y, x]}, "
               f"bgr {self.bgr_frame[y, x]} and processed value {self.processed_frame[y, x]}")
-        self.object.components['Beard'].color.add_data(self.hsv_frame[y, x])
-        self.object.components['Beard'].color.calculate_stats()
+        self.object.components[self.selected_component].color.add_data(self.hsv_frame[y, x])
+        self.object.components[self.selected_component].color.calculate_stats()
 
     def process_frame(self):
         """
@@ -47,7 +47,7 @@ class DetectionController:
         ret, raw = self.vc.read()  # Read frame
         self.bgr_frame = cv2.resize(raw, (640, 360))
         self.hsv_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2HSV)  # Convert to HSV
-        self.processed_frame = self.object.components['Beard'].color.process_image(self.hsv_frame)
+        self.processed_frame = self.object.components[self.selected_component].color.process_image(self.hsv_frame)
 
         rgb_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2RGB)
         rgb_processed = cv2.cvtColor(self.processed_frame, cv2.COLOR_GRAY2RGB)
