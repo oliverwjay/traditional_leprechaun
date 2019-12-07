@@ -74,6 +74,11 @@ class ColorSample(DataSample):
     def __init__(self, input_data=None):
         super().__init__(input_data)
         self.slider_stats = {'open': 0, 'close': 0, 'blur': 0, 'threshold': 50}
+        self.contour = None
+        self.flag_save_contour = False
+
+    def save_contour(self):
+        self.flag_save_contour = True
 
     def process_image(self, image):
         if len(self.data) < 10:
@@ -90,7 +95,15 @@ class ColorSample(DataSample):
 
         opened = cv2.morphologyEx(thresholded, cv2.MORPH_OPEN, make_kernel(self.slider_stats['open']))
         closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, make_kernel(self.slider_stats['close']))
-        return closed
+
+        contours, h = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        w_contours = cv2.drawContours(closed, contours, 0, 127, 3)
+
+        if self.flag_save_contour:
+            self.contour = w_contours[0]
+            self.flag_save_contour = False
+
+        return w_contours
 
 
 class ComponentSample(DataSample):

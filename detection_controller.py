@@ -14,6 +14,7 @@ class InputMode(Enum):
     NONE = 1
     CAMERA = 2
     FILE = 3
+    STATIC = 4
 
 
 class DetectionController:
@@ -46,6 +47,13 @@ class DetectionController:
         return f"Click at {(y, x)} with hsv value {self.hsv_frame[y, x]}, " \
                f"bgr {self.bgr_frame[y, x]} and processed value {self.processed_frame[y, x]}"
 
+    def save_contour(self):
+        """
+        Saves the first contour selected
+        :return: None
+        """
+        self.object.components[self.selected_component].color.save_contour()
+
     def set_slider(self, slider_name, new_size):
         """
         Changes the kernal size to open for a the selected component
@@ -70,7 +78,7 @@ class DetectionController:
         if self.input_mode == InputMode.CAMERA:
             ret, raw = self.vc.read()  # Read frame
             return self.process_frame(raw)
-        elif self.input_mode == InputMode.FILE:
+        elif self.input_mode == InputMode.FILE or self.input_mode == InputMode.STATIC:
             return self.process_frame(self.bgr_frame)
 
     def process_from_file(self, filename):
@@ -89,6 +97,13 @@ class DetectionController:
         :return: None
         """
         self.input_mode = InputMode.CAMERA
+
+    def set_input_to_static(self):
+        """
+        Switches the input mode to static
+        :return: None
+        """
+        self.input_mode = InputMode.STATIC
 
     def process_frame(self, frame):
         """

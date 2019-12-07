@@ -96,6 +96,11 @@ class UI_Window(QWidget):
             right_layout.addWidget(slider_label)
             right_layout.addWidget(slider)
 
+        # Add store contour button
+        contourBtn = QPushButton("Save contour")
+        contourBtn.pressed.connect(self.saveContour)
+        right_layout.addWidget(contourBtn)
+
         # Add a text area
         self.results = QTextEdit()
         right_layout.addWidget(self.results)
@@ -113,6 +118,9 @@ class UI_Window(QWidget):
         self.setLayout(layout)
         self.setWindowTitle("Leprechaun Detector")
         self.setFixedSize(1000, 900)
+
+    def saveContour(self):
+        self.det_controller.save_contour()
 
     def sliderChanged(self, value):
         print(value)
@@ -181,7 +189,7 @@ class UI_Window(QWidget):
         self.timer.start(1000. / 24)
 
     def stopCamera(self):
-        self.timer.stop()
+        self.det_controller.set_input_to_static()
 
     def saveModel(self):
         self.det_controller.object.save()
