@@ -30,10 +30,15 @@ class UI_Window(QWidget):
         self.btn.clicked.connect(self.pickFile)
         layout.addWidget(self.btn)
 
+        # Add a button for saving model
+        saveButton = QPushButton("Save Model")
+        saveButton.clicked.connect(self.saveModel)
+        layout.addWidget(saveButton)
+
         # Add a button
         button_layout = QHBoxLayout()
 
-        btnCamera = QPushButton("Open camera")
+        btnCamera = QPushButton("Start camera")
         btnCamera.clicked.connect(self.openCamera)
         button_layout.addWidget(btnCamera)
 
@@ -143,6 +148,8 @@ class UI_Window(QWidget):
 
     def stopCamera(self):
         self.timer.stop()
+
+    def saveModel(self):
         self.det_controller.object.save()
 
     def getPos(self, event):
