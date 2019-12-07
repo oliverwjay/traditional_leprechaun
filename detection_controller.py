@@ -10,6 +10,12 @@ class InteractionMode(Enum):
     TEACH_OBJECT = 3
 
 
+class InputMode(Enum):
+    NONE = 1
+    CAMERA = 2
+    FILE = 3
+
+
 class DetectionController:
     def __init__(self):
         """
@@ -19,6 +25,7 @@ class DetectionController:
         self.hsv_frame = None  # Raw hue, saturation, and value
         self.processed_frame = None  # Processed output frame
         self.vc = cv2.VideoCapture(0)  # Camera
+        self.input_mode = InputMode.NONE
 
         self.object = Leprechaun()
         self.mode = InteractionMode.COMPOSITE  # Track how the user is interacting
@@ -55,13 +62,40 @@ class DetectionController:
         """
         return self.object.components[self.selected_component].color.slider_stats
 
-    def process_frame(self):
+    def update_image(self):
+        """
+        Pulls a frame and processes it
+        :return: Raw and processed frames
+        """
+        if self.input_mode == InputMode.CAMERA:
+            ret, raw = self.vc.read()  # Read frame
+            return self.process_frame(raw)
+        elif self.input_mode == InputMode.FILE:
+            return self.process_frame(self.bgr_frame)
+
+    def process_from_file(self, filename):
+        """
+        Reads an image from file and processes it
+        :param filename: Filename to read
+        :return: raw and processed frames
+        """
+        frame = cv2.imread(filename)
+        self.input_mode = InputMode.FILE
+        return self.process_frame(frame)
+
+    def set_input_to_camera(self):
+        """
+        Switches the input mode to camera
+        :return: None
+        """
+        self.input_mode = InputMode.CAMERA
+
+    def process_frame(self, frame):
         """
         Pulls and processes the next frame
         :return: raw and processed frames
         """
-        ret, raw = self.vc.read()  # Read frame
-        self.bgr_frame = cv2.resize(raw, (640, 360))
+        self.bgr_frame = cv2.resize(frame, (640, 360))
         self.hsv_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2HSV)  # Convert to HSV
         self.processed_frame = self.object.components[self.selected_component].color.process_image(self.hsv_frame)
 

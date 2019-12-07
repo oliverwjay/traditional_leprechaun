@@ -162,14 +162,13 @@ class UI_Window(QWidget):
         filename = QFileDialog.getOpenFileName(self, 'Open file',
                                                'E:\\Program Files (x86)\\Dynamsoft\\Barcode Reader 7.1\\Images',
                                                "Barcode images (*)")
-        # Show barcode images
-        pixmap = self.resizeImage(filename[0])
-        self.raw_frame.setPixmap(pixmap)
-
-        # Read barcodes
-        self.readBarcode(filename[0])
+        # Update
+        raw, filtered = self.det_controller.process_from_file(filename[0])
+        self.updateFrameDisplay(raw, filtered)
+        self.timer.start(1000. / 24)
 
     def openCamera(self):
+        self.det_controller.set_input_to_camera()
         self.timer.start(1000. / 24)
 
     def stopCamera(self):
@@ -184,7 +183,10 @@ class UI_Window(QWidget):
         # https://stackoverflow.com/questions/41103148/capture-webcam-video-using-pyqt
     def nextFrameSlot(self):
         # Get frames
-        raw, filtered = self.det_controller.process_frame()
+        raw, filtered = self.det_controller.update_image()
+        self.updateFrameDisplay(raw, filtered)
+
+    def updateFrameDisplay(self, raw, filtered):
 
         # Convert to QImage
         raw_image = QImage(raw, raw.shape[1], raw.shape[0], QImage.Format_RGB888)
