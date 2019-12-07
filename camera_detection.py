@@ -1,13 +1,13 @@
 import cv2
 import numpy as np
-from normal_pixel_distribution import ObjectSample
+from data_sample import PixelSample
 
 
 class cv_ui:
     def __init__(self, sample_file='sample.npy'):
         self.frame = None
         self.frame_hsv = None
-        self.sample = ObjectSample(sample_file)
+        self.sample = PixelSample(sample_file)
         cv2.namedWindow('Webcam')
         cv2.setMouseCallback('Webcam', self.click_point)
 
@@ -17,7 +17,7 @@ class cv_ui:
             self.sample.calculate_stats()
             self.sample.save()
             pdf = self.sample.process_image(self.frame_hsv)
-            print(x, y, self.frame_hsv[y, x], pdf[y, x], self.sample.process_pixel(self.frame_hsv[y, x]))
+            print(x, y, self.frame_hsv[y, x], pdf[y, x])
 
     def gradient_webcam(self):
         cap = cv2.VideoCapture(0)
@@ -37,15 +37,10 @@ class cv_ui:
             if key == ord('s'):  # Save
                 self.sample.save()
 
-
-
-        cap.release()
-        cv2.destroyAllWindows()
-
         cap.release()
         cv2.destroyAllWindows()
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     ui = cv_ui()
     ui.gradient_webcam()
