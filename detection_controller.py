@@ -34,16 +34,21 @@ class DetectionController:
         :param y: y coord of click
         :return: None
         """
-        print(f"Click at {(y, x)} with hsv value {self.hsv_frame[y, x]} "
-              f"and processed value {self.processed_frame[y, x]}")
+        print(f"Click at {(y, x)} with hsv value {self.hsv_frame[y, x]}, "
+              f"bgr {self.bgr_frame[y, x]} and processed value {self.processed_frame[y, x]}")
+        self.object.components['Beard'].color.add_data(self.hsv_frame[y, x])
+        self.object.components['Beard'].color.calculate_stats()
 
     def process_frame(self):
         """
         Pulls and processes the next frame
         :return: raw and processed frames
         """
-        ret, self.bgr_frame = self.vc.read()  # Read frame
-        rgb_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2RGB)
+        ret, raw = self.vc.read()  # Read frame
+        self.bgr_frame = cv2.resize(raw, (640, 360))
         self.hsv_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2HSV)  # Convert to HSV
-        self.processed_frame = self.hsv_frame
-        return rgb_frame, self.processed_frame
+        self.processed_frame = self.object.components['Beard'].color.process_image(self.hsv_frame)
+
+        rgb_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2RGB)
+        rgb_processed = cv2.cvtColor(self.processed_frame, cv2.COLOR_GRAY2RGB)
+        return rgb_frame, rgb_processed
