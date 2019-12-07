@@ -39,12 +39,12 @@ class DetectionController:
         Handles clicking the image
         :param x: x coord of click
         :param y: y coord of click
-        :return: None
+        :return: Text to output
         """
-        print(f"Click at {(y, x)} with hsv value {self.hsv_frame[y, x]}, "
-              f"bgr {self.bgr_frame[y, x]} and processed value {self.processed_frame[y, x]}")
         self.object.components[self.selected_component].color.add_data(self.hsv_frame[y, x])
         self.object.components[self.selected_component].color.calculate_stats()
+        return f"Click at {(y, x)} with hsv value {self.hsv_frame[y, x]}, " \
+               f"bgr {self.bgr_frame[y, x]} and processed value {self.processed_frame[y, x]}"
 
     def set_slider(self, slider_name, new_size):
         """

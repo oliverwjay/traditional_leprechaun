@@ -100,6 +100,10 @@ class UI_Window(QWidget):
         self.results = QTextEdit()
         right_layout.addWidget(self.results)
 
+        # Add click message field
+        self.click_text = QLabel("")
+        left_layout.addWidget(self.click_text)
+
         # Merge layouts
         center_layout.addLayout(left_layout)
         center_layout.addLayout(right_layout)
@@ -185,7 +189,8 @@ class UI_Window(QWidget):
     def getPos(self, event):
         x = event.pos().x()
         y = event.pos().y()
-        self.det_controller.handle_click(x, y)
+        result = self.det_controller.handle_click(x, y)
+        self.click_text.setText(result)
 
         # https://stackoverflow.com/questions/41103148/capture-webcam-video-using-pyqt
     def nextFrameSlot(self):
