@@ -61,15 +61,19 @@ class DataSample:
     #     return state
 
 
-def make_kernel(k_size):
-    k_size = k_size + (k_size % 2 == 0)
-    return np.ones((k_size, k_size), np.uint8)
+def make_kernel(k_size, kernel=True):
+    k_size |= 1
+    k_dims = (k_size, k_size)
+    if kernel:
+        return cv2.getStructuringElement(cv2.MORPH_ELLIPSE, k_dims)
+    else:
+        return k_dims
 
 
 class ColorSample(DataSample):
     def __init__(self, input_data=None):
         super().__init__(input_data)
-        self.slider_stats = {'open': 0, 'close': 0, 'blur': 0, 'scale': 50}
+        self.slider_stats = {'open': 0, 'close': 0, 'blur': 0, 'threshold': 50}
 
     def process_image(self, image):
         if len(self.data) < 10:
@@ -78,11 +82,15 @@ class ColorSample(DataSample):
         diff_x_mu = image - self.mean
         pdf_exp = -np.square(diff_x_mu/self.sd)/2
         pdf = np.exp(pdf_exp)*coef
-        pdf = np.prod(pdf, axis=2)*np.power(10, 12)
+        pdf = np.prod(pdf, axis=2)*np.power(10, self.slider_stats['threshold']/5)
         pdf = np.array(np.minimum(pdf, 255), dtype=np.uint8)
 
-        opened = cv2.morphologyEx(pdf, cv2.MORPH_CLOSE, make_kernel(self.slider_stats['open']))
-        return opened
+        blurred = cv2.GaussianBlur(pdf, make_kernel(self.slider_stats['blur'], False), 0)
+        _, thresholded = cv2.threshold(blurred, 127, 255, cv2.THRESH_BINARY)
+
+        opened = cv2.morphologyEx(thresholded, cv2.MORPH_OPEN, make_kernel(self.slider_stats['open']))
+        closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, make_kernel(self.slider_stats['close']))
+        return closed
 
 
 class ComponentSample(DataSample):
