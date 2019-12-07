@@ -61,6 +61,9 @@ class DataSample:
 
 
 class ColorSample(DataSample):
+    def __init__(self, input_data=None):
+        super().__init__(input_data)
+        self.open_kernel_size = 0
 
     def process_image(self, image):
         if len(self.data) < 10:

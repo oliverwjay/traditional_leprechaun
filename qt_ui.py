@@ -7,7 +7,7 @@ import sys
 from PyQt5.QtGui import QPixmap, QImage
 
 from PyQt5.QtWidgets import QApplication, QLabel, QPushButton, QVBoxLayout, QWidget, QFileDialog, QTextEdit, \
-    QSizePolicy, QMessageBox, QHBoxLayout, QRadioButton
+    QSizePolicy, QMessageBox, QHBoxLayout, QRadioButton, QSlider
 from PyQt5.QtCore import Qt, QStringListModel, QSize, QTimer
 
 from detection_controller import DetectionController
@@ -73,6 +73,16 @@ class UI_Window(QWidget):
             radiobutton.toggled.connect(self.compChanged)
             right_layout.addWidget(radiobutton)
 
+        # Create morphology sliders
+        self.open_slider = QSlider(Qt.Horizontal)
+        self.open_slider.setFocusPolicy(Qt.StrongFocus)
+        self.open_slider.setTickPosition(QSlider.TicksBelow)
+        self.open_slider.setTickInterval(10)
+        self.open_slider.setSingleStep(2)
+        self.open_slider.valueChanged.connect(self.openChanged)
+        self.open_slider.setValue(self.det_controller.get_open_size())
+        right_layout.addWidget(self.open_slider)
+
         # Add a text area
         self.results = QTextEdit()
         right_layout.addWidget(self.results)
@@ -87,11 +97,16 @@ class UI_Window(QWidget):
         self.setWindowTitle("Leprechaun Detector")
         self.setFixedSize(1000, 900)
 
+    def openChanged(self, value):
+        print(value)
+        self.det_controller.set_open_size(value)
+
     def compChanged(self):
         radiobutton = self.sender()
         if radiobutton.isChecked():
             print(f"Changed to {radiobutton.component}")
             self.det_controller.selected_component = radiobutton.component
+            self.open_slider.setValue(self.det_controller.get_open_size())
 
     def closeEvent(self, event):
         msg = "Close the app?"
