@@ -82,7 +82,7 @@ class ColorSample(DataSample):
         diff_x_mu = image - self.mean
         pdf_exp = -np.square(diff_x_mu/self.sd)/2
         pdf = np.exp(pdf_exp)*coef
-        pdf = np.prod(pdf, axis=2)*np.power(10, 20 + self.slider_stats['threshold']/5)
+        pdf = np.prod(pdf, axis=2)*np.power(10, 4 + self.slider_stats['threshold']/5)
         pdf = np.array(np.minimum(pdf, 255), dtype=np.uint8)
 
         blurred = cv2.GaussianBlur(pdf, make_kernel(self.slider_stats['blur'], False), 0)
