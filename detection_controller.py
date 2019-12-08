@@ -47,12 +47,12 @@ class DetectionController:
         return f"Click at {(y, x)} with hsv value {self.hsv_frame[y, x]}, " \
                f"bgr {self.bgr_frame[y, x]} and processed value {self.processed_frame[y, x]}"
 
-    def save_contour(self):
+    def save_contour(self, x, y):
         """
         Saves the first contour selected
         :return: None
         """
-        self.object.components[self.selected_component].color.save_contour()
+        self.object.components[self.selected_component].define_contour(self.hsv_frame, x, y)
 
     def set_slider(self, slider_name, new_size):
         """
@@ -112,7 +112,7 @@ class DetectionController:
         """
         self.bgr_frame = cv2.resize(frame, (640, 360))
         self.hsv_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2HSV)  # Convert to HSV
-        self.processed_frame = self.object.components[self.selected_component].color.process_image(self.hsv_frame)
+        self.processed_frame = self.object.components[self.selected_component].process_image(self.hsv_frame)
 
         rgb_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2RGB)
         rgb_processed = cv2.cvtColor(self.processed_frame, cv2.COLOR_GRAY2RGB)

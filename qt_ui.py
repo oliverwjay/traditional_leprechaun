@@ -194,11 +194,16 @@ class UI_Window(QWidget):
     def saveModel(self):
         self.det_controller.object.save()
 
-    def getPos(self, event):
+    def getImgPos(self, event):
         x = event.pos().x()
         y = event.pos().y()
         result = self.det_controller.handle_click(x, y)
         self.click_text.setText(result)
+
+    def getContourPos(self, event):
+        x = event.pos().x()
+        y = event.pos().y()
+        self.det_controller.save_contour(x, y)
 
         # https://stackoverflow.com/questions/41103148/capture-webcam-video-using-pyqt
     def nextFrameSlot(self):
@@ -218,8 +223,9 @@ class UI_Window(QWidget):
         self.raw_frame.setPixmap(raw_pixmap)
         self.filtered_frame.setPixmap(filtered_pixmap)
 
-        # Add click handler
-        self.raw_frame.mousePressEvent = self.getPos
+        # Add click handlers
+        self.raw_frame.mousePressEvent = self.getImgPos
+        self.filtered_frame.mousePressEvent = self.getContourPos
 
 
 def main():

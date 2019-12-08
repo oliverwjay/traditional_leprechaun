@@ -53,14 +53,6 @@ class DataSample:
         if self.data_file is not None:
             pickle.dump(self.data, open(self.data_file, "wb"))
 
-    # def __getstate__(self):
-    #     """
-    #     Builds a representation of the sample to pickle
-    #     :return: Representation of the sample
-    #     """
-    #     state = {'data': self.data}
-    #     return state
-
 
 def make_kernel(k_size, kernel=True):
     k_size |= 1
@@ -76,14 +68,10 @@ class ColorSample(DataSample):
         super().__init__(input_data)
         self.slider_stats = {'open': 0, 'close': 0, 'blur': 0, 'threshold': 50, 'contour threshold': 50}
         self.contour = None
-        self.flag_save_contour = False
 
-    def save_contour(self):
-        self.flag_save_contour = True
-
-    def process_image(self, image):
+    def binarize_image(self, image):
         if len(self.data) < 10:
-            return image[:, :, 0]
+            return None
         coef = 1 / (2 * np.pi * np.square(self.sd))
         diff_x_mu = image - self.mean
         pdf_exp = -np.square(diff_x_mu / self.sd) / 2
@@ -97,25 +85,7 @@ class ColorSample(DataSample):
         opened = cv2.morphologyEx(thresholded, cv2.MORPH_OPEN, make_kernel(self.slider_stats['open']))
         closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, make_kernel(self.slider_stats['close']))
 
-        contours, h = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        if self.contour is not None:
-            new_contours = []
-            for contour in contours:
-                match = cv2.matchShapes(self.contour, contour, cv2.CONTOURS_MATCH_I3, 0)
-                print(f"Match: {match}")
-                if match < self.slider_stats[
-                    'contour threshold'] / 100:
-                    new_contours.append(contour)
-            contours = new_contours
-
-        w_contours = cv2.drawContours(closed, contours, -1, 127, 3)
-
-        if self.flag_save_contour:
-            self.contour = contours[0]
-            self.flag_save_contour = False
-
-        return w_contours
+        return closed
 
 
 class ComponentSample(DataSample):
@@ -126,13 +96,39 @@ class ComponentSample(DataSample):
         super().__init__(input_data)
         self.component_name = component_name
         self.color = ColorSample()
+        self.contour = None
 
-    # def __getstate__(self):
-    #     """
-    #     Builds a representation of the sample to pickle
-    #     :return: Representation of the sample
-    #     """
-    #     state = super().__getstate__()
-    #     state['obj_name'] = self.component_name
-    #     state['color'] = self.color
-    #     return state
+    def get_contours(self, binarized):
+        contours, h = cv2.findContours(binarized, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        if self.contour is not None:
+            new_contours = []
+            for contour in contours:
+                match = cv2.matchShapes(self.contour, contour, cv2.CONTOURS_MATCH_I3, 0)
+                print(f"Match: {match}")
+                if match < self.color.slider_stats['contour threshold'] / 100:
+                    new_contours.append(contour)
+            contours = new_contours
+        return contours
+
+    def define_contour(self, image, x, y):
+        color_binary = self.color.binarize_image(image)
+        if color_binary is None:
+            return None
+        contours = self.get_contours(color_binary)
+
+        for contour in contours:
+            dist = cv2.pointPolygonTest(contour, (x, y), False)
+            if dist >= 0:  # Point clicked is in contour
+                self.contour = contour
+                return
+        # No match found
+        self.contour = None
+
+    def process_image(self, image):
+        color_binary = self.color.binarize_image(image)
+        if color_binary is None:
+            return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        contours = self.get_contours(color_binary)
+        with_contours = cv2.drawContours(color_binary, contours, -1, 127, 3)
+        return with_contours
