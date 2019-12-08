@@ -167,6 +167,7 @@ class ComponentSample(DataSample):
                 orientation = np.arctan2(centroid[0] - gap_center[0], centroid[1] - gap_center[1])
                 _, radius = cv2.minEnclosingCircle(contour)
                 centroid = np.array(centroid)
-                self.found_contours.append({'orientation': orientation, 'centroid': centroid, 'size': radius})
+                self.found_contours.append({'orientation': orientation, 'centroid': centroid,
+                                            'size': radius, 'contour': contour})
 
         return bgr_binary

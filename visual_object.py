@@ -1,6 +1,7 @@
 import pickle
 from os import path
 import numpy as np
+import cv2
 from data_sample import ComponentSample
 
 
@@ -52,7 +53,7 @@ class Leprechaun (VisualObject):
     def save_size(self):
         self.save_size_flag = True
 
-    def find_leprechaun(self):
+    def find_leprechaun(self, img):
         shirts = self.components["Shirt"].found_contours
         beards = self.components["Beard"].found_contours
 
@@ -74,9 +75,14 @@ class Leprechaun (VisualObject):
                 exp_beard_size = self.components["Beard"].expected_size
                 if exp_shirt_size is not None and exp_beard_size is not None:
                     beard_size_error = np.abs(rel_beard_size - exp_beard_size)
+                    rel_beard_orientation = ((rel_beard_orientation + np.pi) % (np.pi * 2)) - np.pi
                     beard_orientation_error = np.abs(rel_beard_orientation/(2 * np.pi))
                     shirt_size_error = np.abs(rel_shirt_size - exp_shirt_size)
                     print(beard_size_error, beard_orientation_error, shirt_size_error)
                     if max(beard_orientation_error, beard_size_error, shirt_size_error) < .2:
                         print("Leprechaun detected!")
+                        img = cv2.line(img, tuple(beard['centroid']), tuple(shirt['centroid']), [0, 255, 0], 2)
+                        img = cv2.drawContours(img, [shirt['contour']], -1, (0, 0, 255), 3)
+                        img = cv2.drawContours(img, [beard['contour']], -1, (255, 0, 0), 3)
+        return img
 
