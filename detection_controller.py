@@ -115,5 +115,5 @@ class DetectionController:
         self.processed_frame = self.object.components[self.selected_component].process_image(self.hsv_frame)
 
         rgb_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2RGB)
-        rgb_processed = cv2.cvtColor(self.processed_frame, cv2.COLOR_GRAY2RGB)
+        rgb_processed = cv2.cvtColor(self.processed_frame, cv2.COLOR_BGR2RGB)
         return rgb_frame, rgb_processed

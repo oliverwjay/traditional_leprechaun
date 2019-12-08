@@ -128,7 +128,8 @@ class ComponentSample(DataSample):
     def process_image(self, image):
         color_binary = self.color.binarize_image(image)
         if color_binary is None:
-            return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            return image
         contours = self.get_contours(color_binary)
-        with_contours = cv2.drawContours(color_binary, contours, -1, 127, 3)
+        bgr_binary = cv2.cvtColor(color_binary, cv2.COLOR_GRAY2BGR)
+        with_contours = cv2.drawContours(bgr_binary, contours, -1, (255, 0, 0), 3)
         return with_contours
