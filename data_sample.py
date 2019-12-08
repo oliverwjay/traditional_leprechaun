@@ -63,6 +63,19 @@ def make_kernel(k_size, kernel=True):
         return k_dims
 
 
+def find_centroid(contour):
+    m = cv2.moments(contour)
+    if m['m00'] == 0:
+        return 0, 0
+    return int(m['m10']/m['m00']), int(m['m01']/m['m00'])
+
+
+def find_center(p1, p2):
+    x = int((p1[0] + p2[0])/2)
+    y = int((p1[1] + p2[1])/2)
+    return x, y
+
+
 class ColorSample(DataSample):
     def __init__(self, input_data=None):
         super().__init__(input_data)
@@ -100,7 +113,7 @@ class ComponentSample(DataSample):
 
     def get_contours(self, binarized):
         contours, h = cv2.findContours(binarized, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
+        contours = [contour for contour in contours if cv2.contourArea(contour) > 500]
         if self.contour is not None:
             new_contours = []
             for contour in contours:
@@ -130,6 +143,31 @@ class ComponentSample(DataSample):
         if color_binary is None:
             return image
         contours = self.get_contours(color_binary)
+
         bgr_binary = cv2.cvtColor(color_binary, cv2.COLOR_GRAY2BGR)
-        with_contours = cv2.drawContours(bgr_binary, contours, -1, (255, 0, 0), 3)
-        return with_contours
+        # with_contours = cv2.drawContours(bgr_binary, contours, -1, (255, 0, 0), 3)
+
+        # Show convexity defects
+        for contour in contours:
+            hull = cv2.convexHull(contour, returnPoints=False)
+            hull_points = cv2.convexHull(contour, returnPoints=True)
+            defects = cv2.convexityDefects(contour, hull)
+            bgr_binary = cv2.drawContours(bgr_binary, [hull_points], -1, (255, 0, 0), 3)
+            centroid = find_centroid(contour)
+            cv2.circle(bgr_binary, centroid, 5, [255, 0, 0], -1)
+            if defects is not None:
+                d, s, e = max((d, s, e) for s, e, f, d in defects[:, 0])
+                start = tuple(contour[s][0])
+                end = tuple(contour[e][0])
+                gap_center = find_center(start, end)
+                cv2.line(bgr_binary, centroid, gap_center, [0, 255, 0], 2)
+                # for i in range(defects.shape[0]):
+                #     s, e, f, d = defects[i, 0]
+                #     if d > 1000:
+                #         start = tuple(contour[s][0])
+                #         end = tuple(contour[e][0])
+                #         far = tuple(contour[f][0])
+                #         cv2.line(bgr_binary, start, end, [0, 255, 0], 2)
+                #         cv2.circle(bgr_binary, far, 5, [0, 0, 255], -1)
+
+        return bgr_binary
