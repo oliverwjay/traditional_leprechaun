@@ -54,6 +54,13 @@ class DetectionController:
         """
         self.object.components[self.selected_component].define_contour(self.hsv_frame, x, y)
 
+    def save_sizes(self):
+        """
+        Saves the expected sizes of the models
+        :return: None
+        """
+        self.object.save_size()
+
     def set_slider(self, slider_name, new_size):
         """
         Changes the kernal size to open for a the selected component
@@ -113,6 +120,11 @@ class DetectionController:
         self.bgr_frame = cv2.resize(frame, (640, 360))
         self.hsv_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2HSV)  # Convert to HSV
         self.processed_frame = self.object.components[self.selected_component].process_image(self.hsv_frame)
+
+        # Find leprechaun
+        self.object.components['Shirt'].process_image(self.hsv_frame)
+        self.object.components['Beard'].process_image(self.hsv_frame)
+        self.object.find_leprechaun()
 
         rgb_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2RGB)
         rgb_processed = cv2.cvtColor(self.processed_frame, cv2.COLOR_BGR2RGB)

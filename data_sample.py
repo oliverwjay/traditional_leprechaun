@@ -110,6 +110,8 @@ class ComponentSample(DataSample):
         self.component_name = component_name
         self.color = ColorSample()
         self.contour = None
+        self.found_contours = []
+        self.expected_size = None
 
     def get_contours(self, binarized):
         contours, h = cv2.findContours(binarized, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -148,6 +150,7 @@ class ComponentSample(DataSample):
         # with_contours = cv2.drawContours(bgr_binary, contours, -1, (255, 0, 0), 3)
 
         # Show convexity defects
+        self.found_contours = []
         for contour in contours:
             hull = cv2.convexHull(contour, returnPoints=False)
             hull_points = cv2.convexHull(contour, returnPoints=True)
@@ -161,13 +164,9 @@ class ComponentSample(DataSample):
                 end = tuple(contour[e][0])
                 gap_center = find_center(start, end)
                 cv2.line(bgr_binary, centroid, gap_center, [0, 255, 0], 2)
-                # for i in range(defects.shape[0]):
-                #     s, e, f, d = defects[i, 0]
-                #     if d > 1000:
-                #         start = tuple(contour[s][0])
-                #         end = tuple(contour[e][0])
-                #         far = tuple(contour[f][0])
-                #         cv2.line(bgr_binary, start, end, [0, 255, 0], 2)
-                #         cv2.circle(bgr_binary, far, 5, [0, 0, 255], -1)
+                orientation = np.arctan2(centroid[0] - gap_center[0], centroid[1] - gap_center[1])
+                _, radius = cv2.minEnclosingCircle(contour)
+                centroid = np.array(centroid)
+                self.found_contours.append({'orientation': orientation, 'centroid': centroid, 'size': radius})
 
         return bgr_binary
