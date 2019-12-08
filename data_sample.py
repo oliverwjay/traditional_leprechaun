@@ -8,6 +8,7 @@ class DataSample:
     """
     Handles a sample of data to evaluate against
     """
+
     def __init__(self, input_data=None):
         """
         Builds a sample
@@ -73,7 +74,7 @@ def make_kernel(k_size, kernel=True):
 class ColorSample(DataSample):
     def __init__(self, input_data=None):
         super().__init__(input_data)
-        self.slider_stats = {'open': 0, 'close': 0, 'blur': 0, 'threshold': 50}
+        self.slider_stats = {'open': 0, 'close': 0, 'blur': 0, 'threshold': 50, 'contour threshold': 50}
         self.contour = None
         self.flag_save_contour = False
 
@@ -83,11 +84,11 @@ class ColorSample(DataSample):
     def process_image(self, image):
         if len(self.data) < 10:
             return image[:, :, 0]
-        coef = 1/(2*np.pi*np.square(self.sd))
+        coef = 1 / (2 * np.pi * np.square(self.sd))
         diff_x_mu = image - self.mean
-        pdf_exp = -np.square(diff_x_mu/self.sd)/2
-        pdf = np.exp(pdf_exp)*coef
-        pdf = np.prod(pdf, axis=2)*np.power(10, 4 + self.slider_stats['threshold']/5)
+        pdf_exp = -np.square(diff_x_mu / self.sd) / 2
+        pdf = np.exp(pdf_exp) * coef
+        pdf = np.prod(pdf, axis=2) * np.power(10, 4 + self.slider_stats['threshold'] / 5)
         pdf = np.array(np.minimum(pdf, 255), dtype=np.uint8)
 
         blurred = cv2.GaussianBlur(pdf, make_kernel(self.slider_stats['blur'], False), 0)
@@ -97,10 +98,21 @@ class ColorSample(DataSample):
         closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, make_kernel(self.slider_stats['close']))
 
         contours, h = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        w_contours = cv2.drawContours(closed, contours, 0, 127, 3)
+
+        if self.contour is not None:
+            new_contours = []
+            for contour in contours:
+                match = cv2.matchShapes(self.contour, contour, cv2.CONTOURS_MATCH_I3, 0)
+                print(f"Match: {match}")
+                if match < self.slider_stats[
+                    'contour threshold'] / 100:
+                    new_contours.append(contour)
+            contours = new_contours
+
+        w_contours = cv2.drawContours(closed, contours, -1, 127, 3)
 
         if self.flag_save_contour:
-            self.contour = w_contours[0]
+            self.contour = contours[0]
             self.flag_save_contour = False
 
         return w_contours
