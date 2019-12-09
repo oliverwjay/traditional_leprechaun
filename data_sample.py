@@ -120,7 +120,7 @@ class ComponentSample(DataSample):
             new_contours = []
             for contour in contours:
                 match = cv2.matchShapes(self.contour, contour, cv2.CONTOURS_MATCH_I3, 0)
-                print(f"Match: {match}")
+                # print(f"Match: {match}")
                 if match < self.color.slider_stats['contour threshold'] / 100:
                     new_contours.append(contour)
             contours = new_contours

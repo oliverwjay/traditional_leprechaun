@@ -59,9 +59,9 @@ class Leprechaun (VisualObject):
 
         for shirt in shirts:
             for beard in beards:
-                vect = shirt['centroid'] - beard['centroid']
-                obj_dist = np.linalg.norm(vect)
-                obj_orientation = np.arctan2(vect[0], vect[1])
+                obj_vect = shirt['centroid'] - beard['centroid']
+                obj_dist = np.linalg.norm(obj_vect)
+                obj_orientation = np.arctan2(obj_vect[0], obj_vect[1])
                 rel_beard_size = beard['size'] / obj_dist
                 rel_beard_orientation = beard['orientation'] - obj_orientation
                 rel_shirt_size = shirt['size'] / obj_dist
@@ -79,7 +79,7 @@ class Leprechaun (VisualObject):
                     beard_orientation_error = np.abs(rel_beard_orientation/(2 * np.pi))
                     shirt_size_error = np.abs(rel_shirt_size - exp_shirt_size)
                     print(beard_size_error, beard_orientation_error, shirt_size_error)
-                    if max(beard_orientation_error, beard_size_error, shirt_size_error) < .2:
+                    if max(beard_orientation_error, beard_size_error, shirt_size_error) < .15:
                         print("Leprechaun detected!")
                         img = cv2.line(img, tuple(beard['centroid']), tuple(shirt['centroid']), [0, 255, 0], 2)
                         img = cv2.drawContours(img, [shirt['contour']], -1, (0, 0, 255), 3)
