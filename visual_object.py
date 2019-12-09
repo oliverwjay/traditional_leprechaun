@@ -43,8 +43,8 @@ class VisualObject:
             for component, data in raw_component_data.items():  # Populate
                 self.components[component] = ComponentSample(data, component)  # Create object from data
 
-    def add_contour(self, x, y):
-        self.save_size_flag = (x, y)
+    def add_contour(self, x, y, component_name):
+        self.save_size_flag = ((x, y), component_name)
 
     def get_contour_pose(self, contour):
         rel_contour_size = contour['size'] / self.obj_dist
@@ -75,8 +75,9 @@ class VisualObject:
             for contour in component.found_contours:
                 invariant_pose = self.get_contour_pose(contour)
                 if self.save_size_flag:
-                    dist = cv2.pointPolygonTest(contour['contour'], self.save_size_flag, False)
-                    if dist >= 0:  # Point clicked is in contour
+                    point, save_component = self.save_size_flag
+                    dist = cv2.pointPolygonTest(contour['contour'], point, False)
+                    if component.component_name == save_component and dist >= 0:  # Point clicked is in contour
                         component.exp_poses.append(invariant_pose)
                         self.save_size_flag = None
                 for exp_pose in component.exp_poses:

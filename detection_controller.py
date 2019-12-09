@@ -57,7 +57,7 @@ class DetectionController:
         if self.interaction_mode == InteractionMode.TEACH_CONTOUR:
             self.object.components[self.selected_component].define_contour(self.hsv_frame, x, y)
         elif self.interaction_mode == InteractionMode.TEACH_OBJECT:
-            self.object.add_contour(x, y)
+            self.object.add_contour(x, y, self.selected_component)
             self.interaction_mode = InteractionMode.TEACH_CONTOUR
 
     def save_sizes(self):
