@@ -125,6 +125,9 @@ class DetectionController:
         :return: None
         """
         self.input_mode = InputMode.STATIC
+        # self.object.components[self.selected_component].color.save_steps = True
+        # cv2.imwrite("raw_image.jpg", self.bgr_frame)
+        # self.object.save_debug(self.bgr_frame)
 
     def clear_color(self):
         """

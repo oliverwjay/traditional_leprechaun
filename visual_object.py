@@ -106,3 +106,23 @@ class Leprechaun (VisualObject):
                 output = self.match_components(output)
         return output
 
+    def save_debug(self, bgr_image):
+        gray = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2GRAY)
+        bgr_image = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+        gray2 = bgr_image.copy()
+        shirt = self.components['Shirt'].found_contours[0]
+        beard = self.components['Beard'].found_contours[0]
+        shirt_center, _ = cv2.minEnclosingCircle(shirt['contour'])
+        bear_center, _ = cv2.minEnclosingCircle(beard['contour'])
+        bgr_image = cv2.circle(bgr_image, tuple(np.uint64(shirt_center)), np.uint64(shirt['size']), [255, 0, 0], 2)
+        bgr_image = cv2.circle(bgr_image, tuple(np.uint64(bear_center)), np.uint64(beard['size']), [255, 0, 0], 2)
+        bgr_image = cv2.line(bgr_image, tuple(np.uint64(beard['centroid'])), tuple(np.uint64(shirt['centroid'])), [0, 255, 0], 2)
+        bgr_image = cv2.line(bgr_image, tuple(np.uint64(beard['centroid'])), tuple(np.uint64(beard['centroid'] + np.array([beard['size'], 0]))), [0, 255, 0], 2)
+        bgr_image = cv2.line(bgr_image, tuple(np.uint64(shirt['centroid'])), tuple(np.uint64(shirt['centroid'] + np.array([shirt['size'], 0]))), [0, 255, 0], 2)
+        beard_ang = np.array([-np.sin(beard['orientation']), -np.cos(beard['orientation'])]) * beard['size']
+        gray2 = cv2.line(gray2, tuple(np.uint64(beard['centroid'])), tuple(np.uint64(shirt['centroid'])), [0, 255, 0], 2)
+        gray2 = cv2.line(gray2, tuple(np.uint64(beard['centroid'])), tuple(np.uint64(beard['centroid'] + beard_ang)), [255, 0, 0], 2)
+
+        cv2.imwrite("circles.jpg", bgr_image)
+        cv2.imwrite("angles.jpg", gray2)
+

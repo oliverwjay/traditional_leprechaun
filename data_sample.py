@@ -172,7 +172,7 @@ class ComponentSample(DataSample):
         bgr_binary = cv2.cvtColor(color_binary, cv2.COLOR_GRAY2BGR)
 
         if self.color.save_steps:
-            with_contours = cv2.drawContours(bgr_binary, contours, -1, (255, 0, 0), 3)
+            with_contours = cv2.drawContours(bgr_binary.copy(), contours, -1, (255, 0, 0), 3)
             cv2.imwrite("filtered_contours.jpg", with_contours)
 
         # Show convexity defects
@@ -194,6 +194,7 @@ class ComponentSample(DataSample):
                 cv2.line(bgr_binary, centroid, gap_center, [0, 255, 0], 2)
 
                 if self.color.save_steps:
+                    cv2.line(bgr_binary, start, end, [0, 0, 255], 2)
                     cv2.imwrite("with_defect.jpg", bgr_binary)
 
                 orientation = np.arctan2(centroid[0] - gap_center[0], centroid[1] - gap_center[1])
