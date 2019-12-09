@@ -85,8 +85,9 @@ class Leprechaun (VisualObject):
                         for exp_pose in component.exp_poses:
                             if max(np.abs(exp_pose - invariant_pose)) < .2:
                                 # Match fit
-                                img = cv2.drawContours(output, [contour['contour']], -1, (0, 0, 255), 3)
+                                output = cv2.drawContours(output, [contour['contour']], -1, (0, 0, 255), 3)
                             else:
                                 print("Failed ", component.component_name)
+        self.save_size_flag = False
         return output
 
