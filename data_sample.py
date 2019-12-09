@@ -112,6 +112,7 @@ class ComponentSample(DataSample):
         self.contour = None
         self.found_contours = []
         self.expected_size = None
+        self.exp_poses = []
 
     def get_contours(self, binarized):
         contours, h = cv2.findContours(binarized, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

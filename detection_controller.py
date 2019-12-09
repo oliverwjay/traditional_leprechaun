@@ -122,8 +122,8 @@ class DetectionController:
         self.processed_frame = self.object.components[self.selected_component].process_image(self.hsv_frame)
 
         # Find leprechaun
-        self.object.components['Shirt'].process_image(self.hsv_frame)
-        self.object.components['Beard'].process_image(self.hsv_frame)
+        for component in self.object.components.values():
+            component.process_image(self.hsv_frame)
         with_leprechaun = self.object.find_leprechaun(self.bgr_frame)
 
         rgb_frame = cv2.cvtColor(with_leprechaun, cv2.COLOR_BGR2RGB)

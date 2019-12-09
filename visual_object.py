@@ -47,7 +47,7 @@ class VisualObject:
 
 class Leprechaun (VisualObject):
     def __init__(self):
-        super().__init__("leprechaun.npy", ["Beard", "Hat", "Shirt", "Clover", "Face", "Hands"])
+        super().__init__("leprechaun.npy", ["Beard", "Hat", "Shirt", "Clover", "Skin"])
         self.save_size_flag = False
 
     def save_size(self):
@@ -62,27 +62,22 @@ class Leprechaun (VisualObject):
                 obj_vect = shirt['centroid'] - beard['centroid']
                 obj_dist = np.linalg.norm(obj_vect)
                 obj_orientation = np.arctan2(obj_vect[0], obj_vect[1])
-                rel_beard_size = beard['size'] / obj_dist
-                rel_beard_orientation = beard['orientation'] - obj_orientation
-                rel_shirt_size = shirt['size'] / obj_dist
+                obj_unit_vector = obj_vect / obj_dist
 
-                if self.save_size_flag:
-                    self.save_size_flag = False
-                    self.components["Shirt"].expected_size = rel_shirt_size
-                    self.components["Beard"].expected_size = rel_beard_size
-
-                exp_shirt_size = self.components["Shirt"].expected_size
-                exp_beard_size = self.components["Beard"].expected_size
-                if exp_shirt_size is not None and exp_beard_size is not None:
-                    beard_size_error = np.abs(rel_beard_size - exp_beard_size)
-                    rel_beard_orientation = ((rel_beard_orientation + np.pi) % (np.pi * 2)) - np.pi
-                    beard_orientation_error = np.abs(rel_beard_orientation/(2 * np.pi))
-                    shirt_size_error = np.abs(rel_shirt_size - exp_shirt_size)
-                    print(beard_size_error, beard_orientation_error, shirt_size_error)
-                    if max(beard_orientation_error, beard_size_error, shirt_size_error) < .15:
-                        print("Leprechaun detected!")
-                        img = cv2.line(img, tuple(beard['centroid']), tuple(shirt['centroid']), [0, 255, 0], 2)
-                        img = cv2.drawContours(img, [shirt['contour']], -1, (0, 0, 255), 3)
-                        img = cv2.drawContours(img, [beard['contour']], -1, (255, 0, 0), 3)
+                for component in self.components.values():
+                    if self.save_size_flag:
+                        component.exp_poses = []
+                    for contour in component.found_contours:
+                        rel_contour_size = contour['size'] / obj_dist
+                        scaled_contour_position = (contour['centroid'] - shirt['centroid']) / obj_dist
+                        invariant_pose = np.concatenate((obj_unit_vector * scaled_contour_position, [rel_contour_size]))
+                        if self.save_size_flag:
+                            component.exp_poses.append(invariant_pose)
+                        for exp_pose in component.exp_poses:
+                            if max(np.abs(exp_pose - invariant_pose)) < .2:
+                                # Match fit
+                                img = cv2.drawContours(img, [contour['contour']], -1, (0, 0, 255), 3)
+                            else:
+                                pass
         return img
 
