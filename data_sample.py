@@ -85,6 +85,7 @@ class ColorSample(DataSample):
         super().__init__(input_data)
         self.slider_stats = {'open': 0, 'close': 0, 'blur': 0, 'threshold': 50, 'contour threshold': 50}
         self.contour = None
+        self.save_steps = False
 
     def binarize_image(self, image):
         if len(self.data) < 10:
@@ -97,11 +98,20 @@ class ColorSample(DataSample):
         pdf = np.prod(pdf, axis=2) * np.power(10, 4 + self.slider_stats['threshold'] / 5)
         pdf = np.array(np.minimum(pdf, 255), dtype=np.uint8)
 
+        if self.save_steps:
+            cv2.imwrite("prob.jpg", pdf)
+
         blurred = cv2.GaussianBlur(pdf, make_kernel(self.slider_stats['blur'], False), 0)
         _, thresholded = cv2.threshold(blurred, 127, 255, cv2.THRESH_BINARY)
 
+        if self.save_steps:
+            cv2.imwrite("blur_thresh.jpg", thresholded)
+
         opened = cv2.morphologyEx(thresholded, cv2.MORPH_OPEN, make_kernel(self.slider_stats['open']))
         closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, make_kernel(self.slider_stats['close']))
+
+        if self.save_steps:
+            cv2.imwrite("morphed.jpg", closed)
 
         return closed
 
@@ -121,7 +131,14 @@ class ComponentSample(DataSample):
 
     def get_contours(self, binarized):
         contours, h = cv2.findContours(binarized, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        if self.color.save_steps:
+            bgr_binary = cv2.cvtColor(binarized, cv2.COLOR_GRAY2BGR)
+            with_contours = cv2.drawContours(bgr_binary, contours, -1, (255, 0, 0), 3)
+            cv2.imwrite("all_contours.jpg", with_contours)
+
         contours = [contour for contour in contours if cv2.contourArea(contour) > 500]
+
         if self.contour is not None:
             new_contours = []
             for contour in contours:
@@ -142,18 +159,21 @@ class ComponentSample(DataSample):
             dist = cv2.pointPolygonTest(contour, (x, y), False)
             if dist >= 0:  # Point clicked is in contour
                 self.contour = contour
-                return
+                return contour
         # No match found
         self.contour = None
 
     def process_image(self, image):
         color_binary = self.color.binarize_image(image)
         if color_binary is None:
-            return image
+            return np.zeros(image.shape, dtype=np.uint8)
         contours = self.get_contours(color_binary)
 
         bgr_binary = cv2.cvtColor(color_binary, cv2.COLOR_GRAY2BGR)
-        # with_contours = cv2.drawContours(bgr_binary, contours, -1, (255, 0, 0), 3)
+
+        if self.color.save_steps:
+            with_contours = cv2.drawContours(bgr_binary, contours, -1, (255, 0, 0), 3)
+            cv2.imwrite("filtered_contours.jpg", with_contours)
 
         # Show convexity defects
         self.found_contours = []
@@ -162,6 +182,8 @@ class ComponentSample(DataSample):
             hull_points = cv2.convexHull(contour, returnPoints=True)
             defects = cv2.convexityDefects(contour, hull)
             bgr_binary = cv2.drawContours(bgr_binary, [hull_points], -1, (255, 0, 0), 3)
+            if self.color.save_steps:
+                cv2.imwrite("hull.jpg", bgr_binary)
             centroid = find_centroid(contour)
             cv2.circle(bgr_binary, centroid, 5, [255, 0, 0], -1)
             if defects is not None:
@@ -170,6 +192,10 @@ class ComponentSample(DataSample):
                 end = tuple(contour[e][0])
                 gap_center = find_center(start, end)
                 cv2.line(bgr_binary, centroid, gap_center, [0, 255, 0], 2)
+
+                if self.color.save_steps:
+                    cv2.imwrite("with_defect.jpg", bgr_binary)
+
                 orientation = np.arctan2(centroid[0] - gap_center[0], centroid[1] - gap_center[1])
                 _, radius = cv2.minEnclosingCircle(contour)
                 centroid = np.array(centroid)

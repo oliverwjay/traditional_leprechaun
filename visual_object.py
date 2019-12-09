@@ -2,7 +2,7 @@ import pickle
 from os import path
 import numpy as np
 import cv2
-from data_sample import ComponentSample
+from data_sample import ComponentSample, ColorSample
 
 
 class VisualObject:
@@ -13,6 +13,12 @@ class VisualObject:
         :param component_names:
         """
         self.data_file = data_file  # Save file name to write changes
+        self.save_size_flag = False
+        self.obj_unit_vector = None
+        self.obj_dist = None
+        self.obj_orientation = None
+        self.obj_vect = None
+        self.origin = None
 
         # Read model from file
         if data_file is not None and path.isfile(data_file):
@@ -37,13 +43,21 @@ class VisualObject:
             for component, data in raw_component_data.items():  # Populate
                 self.components[component] = ComponentSample(data, component)  # Create object from data
 
+    def add_contour(self, x, y):
+        self.save_size_flag = (x, y)
+
+    def get_contour_pose(self, contour):
+        rel_contour_size = contour['size'] / self.obj_dist
+        scaled_contour_position = (contour['centroid'] - self.origin) / self.obj_dist
+        return np.concatenate((self.obj_unit_vector * scaled_contour_position, [rel_contour_size]))
+
     def clear_component(self, component_name):
         """
-        Clears all data for a given component
+        Clears color for a given component
         :param component_name: Name of component to reset
         :return: None
         """
-        self.components[component_name] = ComponentSample(None, component_name)
+        self.components[component_name].color = ColorSample(None)
 
     def save(self):
         """
@@ -52,14 +66,29 @@ class VisualObject:
         """
         pickle.dump(self.components, open(self.data_file, "wb"))
 
+    def match_components(self, img):
+        """
+        Draws contours that match the current object pose
+        :return: Image with contours drawn on
+        """
+        for component in self.components.values():
+            for contour in component.found_contours:
+                invariant_pose = self.get_contour_pose(contour)
+                if self.save_size_flag:
+                    dist = cv2.pointPolygonTest(contour['contour'], self.save_size_flag, False)
+                    if dist >= 0:  # Point clicked is in contour
+                        component.exp_poses.append(invariant_pose)
+                        self.save_size_flag = None
+                for exp_pose in component.exp_poses:
+                    if max(np.abs(exp_pose - invariant_pose)) < .2:
+                        # Match fit
+                        output = cv2.drawContours(img, [contour['contour']], -1, (0, 0, 255), 3)
+        return img
+
 
 class Leprechaun (VisualObject):
     def __init__(self):
         super().__init__("leprechaun.npy", ["Beard", "Hat", "Shirt", "Clover", "Skin"])
-        self.save_size_flag = False
-
-    def save_size(self):
-        self.save_size_flag = True
 
     def find_leprechaun(self, img):
         output = img.copy()
@@ -68,26 +97,12 @@ class Leprechaun (VisualObject):
 
         for shirt in shirts:
             for beard in beards:
-                obj_vect = shirt['centroid'] - beard['centroid']
-                obj_dist = np.linalg.norm(obj_vect)
-                obj_orientation = np.arctan2(obj_vect[0], obj_vect[1])
-                obj_unit_vector = obj_vect / obj_dist
+                self.obj_vect = shirt['centroid'] - beard['centroid']
+                self.obj_dist = np.linalg.norm(self.obj_vect)
+                self.obj_orientation = np.arctan2(self.obj_vect[0], self.obj_vect[1])
+                self.obj_unit_vector = self.obj_vect / self.obj_dist
+                self.origin = shirt["centroid"]
 
-                for component in self.components.values():
-                    if self.save_size_flag:
-                        component.exp_poses = []
-                    for contour in component.found_contours:
-                        rel_contour_size = contour['size'] / obj_dist
-                        scaled_contour_position = (contour['centroid'] - shirt['centroid']) / obj_dist
-                        invariant_pose = np.concatenate((obj_unit_vector * scaled_contour_position, [rel_contour_size]))
-                        if self.save_size_flag:
-                            component.exp_poses.append(invariant_pose)
-                        for exp_pose in component.exp_poses:
-                            if max(np.abs(exp_pose - invariant_pose)) < .2:
-                                # Match fit
-                                output = cv2.drawContours(output, [contour['contour']], -1, (0, 0, 255), 3)
-                            else:
-                                print("Failed ", component.component_name)
-        self.save_size_flag = False
+                output = self.match_components(output)
         return output
 

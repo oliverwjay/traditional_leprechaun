@@ -7,7 +7,8 @@ from visual_object import Leprechaun
 class InteractionMode(Enum):
     COMPOSITE = 1
     TEACH_COLOR = 2
-    TEACH_OBJECT = 3
+    TEACH_CONTOUR = 3
+    TEACH_OBJECT = 4
 
 
 class InputMode(Enum):
@@ -27,6 +28,7 @@ class DetectionController:
         self.processed_frame = None  # Processed output frame
         self.vc = cv2.VideoCapture(0)  # Camera
         self.input_mode = InputMode.NONE
+        self.interaction_mode = InteractionMode.TEACH_CONTOUR
 
         self.object = Leprechaun()
         self.mode = InteractionMode.COMPOSITE  # Track how the user is interacting
@@ -52,14 +54,26 @@ class DetectionController:
         Saves the first contour selected
         :return: None
         """
-        self.object.components[self.selected_component].define_contour(self.hsv_frame, x, y)
+        if self.interaction_mode == InteractionMode.TEACH_CONTOUR:
+            self.object.components[self.selected_component].define_contour(self.hsv_frame, x, y)
+        elif self.interaction_mode == InteractionMode.TEACH_OBJECT:
+            self.object.add_contour(x, y)
+            self.interaction_mode = InteractionMode.TEACH_CONTOUR
 
     def save_sizes(self):
         """
         Saves the expected sizes of the models
         :return: None
         """
-        self.object.save_size()
+        self.interaction_mode = InteractionMode.TEACH_OBJECT
+
+    def clear_sizes(self):
+        """
+        Clears all the poses of the given component
+        :return: None
+        """
+        self.object.components[self.selected_component].exp_poses = []
+        self.object.components[self.selected_component].contour = None
 
     def set_slider(self, slider_name, new_size):
         """

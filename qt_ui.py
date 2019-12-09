@@ -102,8 +102,13 @@ class UI_Window(QWidget):
         right_layout.addWidget(clearBtn)
 
         # Add store contour button
-        sizeBtn = QPushButton("Save object")
+        sizeBtn = QPushButton("Save contour")
         sizeBtn.pressed.connect(self.saveContour)
+        right_layout.addWidget(sizeBtn)
+
+        # Add store contour button
+        sizeBtn = QPushButton("Clear contours")
+        sizeBtn.pressed.connect(self.clearContour)
         right_layout.addWidget(sizeBtn)
 
         # Add a text area
@@ -129,6 +134,9 @@ class UI_Window(QWidget):
 
     def saveContour(self):
         self.det_controller.save_sizes()
+
+    def clearContour(self):
+        self.det_controller.clear_sizes()
 
     def sliderChanged(self, value):
         print(value)
