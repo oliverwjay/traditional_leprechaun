@@ -112,6 +112,13 @@ class DetectionController:
         """
         self.input_mode = InputMode.STATIC
 
+    def clear_color(self):
+        """
+        Resets all data for selected color
+        :return: None
+        """
+        self.object.clear_component(self.selected_component)
+
     def process_frame(self, frame):
         """
         Pulls and processes the next frame

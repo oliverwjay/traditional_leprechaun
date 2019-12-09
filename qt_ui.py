@@ -97,7 +97,12 @@ class UI_Window(QWidget):
             right_layout.addWidget(slider)
 
         # Add store contour button
-        sizeBtn = QPushButton("Save sizes")
+        clearBtn = QPushButton("Clear data for color")
+        clearBtn.pressed.connect(self.clearColor)
+        right_layout.addWidget(clearBtn)
+
+        # Add store contour button
+        sizeBtn = QPushButton("Save object")
         sizeBtn.pressed.connect(self.saveContour)
         right_layout.addWidget(sizeBtn)
 
@@ -118,6 +123,9 @@ class UI_Window(QWidget):
         self.setLayout(layout)
         self.setWindowTitle("Leprechaun Detector")
         self.setFixedSize(1000, 900)
+
+    def clearColor(self):
+        self.det_controller.clear_color()
 
     def saveContour(self):
         self.det_controller.save_sizes()

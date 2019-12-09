@@ -4,6 +4,10 @@ import os
 import pickle
 
 
+def angle_wrap(a1, full_wrap=180):
+    return (a1 - full_wrap / 2) % full_wrap - full_wrap / 2
+
+
 class DataSample:
     """
     Handles a sample of data to evaluate against
@@ -87,6 +91,7 @@ class ColorSample(DataSample):
             return None
         coef = 1 / (2 * np.pi * np.square(self.sd))
         diff_x_mu = image - self.mean
+        diff_x_mu[:, :, 0] = np.abs(angle_wrap(diff_x_mu[:, :, 0]))
         pdf_exp = -np.square(diff_x_mu / self.sd) / 2
         pdf = np.exp(pdf_exp) * coef
         pdf = np.prod(pdf, axis=2) * np.power(10, 4 + self.slider_stats['threshold'] / 5)

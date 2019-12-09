@@ -37,6 +37,14 @@ class VisualObject:
             for component, data in raw_component_data.items():  # Populate
                 self.components[component] = ComponentSample(data, component)  # Create object from data
 
+    def clear_component(self, component_name):
+        """
+        Clears all data for a given component
+        :param component_name: Name of component to reset
+        :return: None
+        """
+        self.components[component_name] = ComponentSample(None, component_name)
+
     def save(self):
         """
         Stores to pickle file
@@ -54,6 +62,7 @@ class Leprechaun (VisualObject):
         self.save_size_flag = True
 
     def find_leprechaun(self, img):
+        output = img.copy()
         shirts = self.components["Shirt"].found_contours
         beards = self.components["Beard"].found_contours
 
@@ -76,8 +85,8 @@ class Leprechaun (VisualObject):
                         for exp_pose in component.exp_poses:
                             if max(np.abs(exp_pose - invariant_pose)) < .2:
                                 # Match fit
-                                img = cv2.drawContours(img, [contour['contour']], -1, (0, 0, 255), 3)
+                                img = cv2.drawContours(output, [contour['contour']], -1, (0, 0, 255), 3)
                             else:
-                                pass
-        return img
+                                print("Failed ", component.component_name)
+        return output
 
