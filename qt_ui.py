@@ -16,6 +16,9 @@ from detection_controller import DetectionController
 class UI_Window(QWidget):
 
     def __init__(self):
+        """
+        Build user interface
+        """
         QWidget.__init__(self)
 
         # Create a timer.
@@ -130,19 +133,39 @@ class UI_Window(QWidget):
         self.setFixedSize(1000, 900)
 
     def clearColor(self):
+        """
+        Clear data for a color
+        :return:
+        """
         self.det_controller.clear_color()
 
     def saveContour(self):
+        """
+        Save a contour to model
+        :return:
+        """
         self.det_controller.save_sizes()
 
     def clearContour(self):
+        """
+        Clear contours for the selected component
+        :return:
+        """
         self.det_controller.clear_sizes()
 
     def sliderChanged(self, value):
-        print(value)
+        """
+        Handle value change in a slider
+        :param value: New value
+        :return:
+        """
         self.det_controller.set_slider(self.sender().slider_name, value)
 
     def compChanged(self):
+        """
+        Handle a change to the selected component
+        :return:
+        """
         radiobutton = self.sender()
         if radiobutton.isChecked():
             print(f"Changed to {radiobutton.component}")
@@ -158,6 +181,11 @@ class UI_Window(QWidget):
                 slider.setValue(slider_stats[slider_name])
 
     def closeEvent(self, event):
+        """
+        Handle closing the app
+        :param event:
+        :return:
+        """
         msg = "Close the app?"
         reply = QMessageBox.question(self, 'Message',
                                      msg, QMessageBox.Yes, QMessageBox.No)
@@ -169,6 +197,11 @@ class UI_Window(QWidget):
             event.ignore()
 
     def resizeImage(self, filename):
+        """
+        Resizes the image to display
+        :param filename:
+        :return:
+        """
         pixmap = QPixmap(filename)
         lwidth = self.raw_frame.maximumWidth()
         pwidth = pixmap.width()
@@ -190,6 +223,10 @@ class UI_Window(QWidget):
             return pixmap
 
     def pickFile(self):
+        """
+        Handles selecting an image to process
+        :return:
+        """
         self.stopCamera()
         # Load an image file.
         filename = QFileDialog.getOpenFileName(self, 'Open file',
@@ -201,33 +238,65 @@ class UI_Window(QWidget):
         self.timer.start(1000. / 24)
 
     def openCamera(self):
+        """
+        Handle starting the camera
+        :return:
+        """
         self.det_controller.set_input_to_camera()
         self.timer.start(1000. / 24)
 
     def stopCamera(self):
+        """
+        Handle pausing the camera
+        :return:
+        """
         self.det_controller.set_input_to_static()
 
     def saveModel(self):
+        """
+        Handle saving the model
+        :return:
+        """
         self.det_controller.object.save()
 
     def getImgPos(self, event):
+        """
+        Handle clicking the image
+        :param event:
+        :return:
+        """
         x = event.pos().x()
         y = event.pos().y()
         result = self.det_controller.handle_click(x, y)
         self.click_text.setText(result)
 
     def getContourPos(self, event):
+        """
+        Handle clicking a contour
+        :param event:
+        :return:
+        """
         x = event.pos().x()
         y = event.pos().y()
         self.det_controller.save_contour(x, y)
 
         # https://stackoverflow.com/questions/41103148/capture-webcam-video-using-pyqt
     def nextFrameSlot(self):
+        """
+        Process next frame
+        :return:
+        """
         # Get frames
         raw, filtered = self.det_controller.update_image()
         self.updateFrameDisplay(raw, filtered)
 
     def updateFrameDisplay(self, raw, filtered):
+        """
+        Update displayed frame
+        :param raw: Raw frame to display
+        :param filtered: Processed frame to display
+        :return:
+        """
 
         # Convert to QImage
         raw_image = QImage(raw, raw.shape[1], raw.shape[0], QImage.Format_RGB888)
@@ -245,6 +314,10 @@ class UI_Window(QWidget):
 
 
 def main():
+    """
+    Start applicaiton
+    :return:
+    """
     app = QApplication(sys.argv)
     ex = UI_Window()
     ex.show()

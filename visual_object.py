@@ -10,7 +10,7 @@ class VisualObject:
         """
         Initializes the VisualObject from a file. Updates the keys to match given component names
         :param data_file: File name to read and save model data
-        :param component_names:
+        :param component_names: Names of the components to model as part of the object
         """
         self.data_file = data_file  # Save file name to write changes
         self.save_size_flag = False
@@ -44,11 +44,26 @@ class VisualObject:
                 self.components[component] = ComponentSample(data, component)  # Create object from data
 
     def add_contour(self, x, y, component_name):
+        """
+        Adds the contour of a given component at a given point to the model
+        :param x: x coordinate
+        :param y: y coordinate
+        :param component_name: Name of component to add
+        :return: None
+        """
         self.save_size_flag = ((x, y), component_name)
 
     def get_contour_pose(self, contour):
+        """
+        Gets the pose of a contour relative to object pose
+        :param contour: Contour to process
+        :return: np array representation of the pose
+        """
+        # Scale
         rel_contour_size = contour['size'] / self.obj_dist
+        # Get relative position
         scaled_contour_position = (contour['centroid'] - self.origin) / self.obj_dist
+        # Return full pose
         return np.concatenate((self.obj_unit_vector * scaled_contour_position, [rel_contour_size]))
 
     def clear_component(self, component_name):
@@ -58,6 +73,7 @@ class VisualObject:
         :return: None
         """
         self.components[component_name].color = ColorSample(None)
+        self.components[component_name].found_contours = []
 
     def save(self):
         """
@@ -89,9 +105,17 @@ class VisualObject:
 
 class Leprechaun (VisualObject):
     def __init__(self):
+        """
+        Constructor for the leprechaun
+        """
         super().__init__("leprechaun.npy", ["Beard", "Hat", "Shirt", "Clover", "Skin"])
 
     def find_leprechaun(self, img):
+        """
+        Finds a leprechaun in the image
+        :param img: Image to search
+        :return: Image with leprechaun overlay
+        """
         output = img.copy()
         shirts = self.components["Shirt"].found_contours
         beards = self.components["Beard"].found_contours
@@ -108,6 +132,11 @@ class Leprechaun (VisualObject):
         return output
 
     def save_debug(self, bgr_image):
+        """
+        Saves an image with progress for debugging
+        :param bgr_image: Image to show data for
+        :return: None
+        """
         gray = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2GRAY)
         bgr_image = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         gray2 = bgr_image.copy()
@@ -126,4 +155,3 @@ class Leprechaun (VisualObject):
 
         cv2.imwrite("circles.jpg", bgr_image)
         cv2.imwrite("angles.jpg", gray2)
-
