@@ -109,55 +109,32 @@ class VisualObject:
             return img
 
 
-class Leprechaun (VisualObject):
+class GenericObject (VisualObject):
     def __init__(self):
         """
-        Constructor for the leprechaun
+        Constructor for object
         """
-        super().__init__("leprechaun.npy", ["Beard", "Hat", "Shirt", "Clover", "Skin"])
+        super().__init__("obj.npy", ["Component 1", "Component 2", "Component 3", "Component 4", "Component 5"])
+        self.first_component = "Component 1"
+        self.second_component = "Component 2"
 
-    def find_leprechaun(self, img):
+    def find_object(self, img):
         """
-        Finds a leprechaun in the image
+        Finds the object in the image
         :param img: Image to search
-        :return: Image with leprechaun overlay
+        :return: Image with object overlay
         """
         output = img.copy()
-        shirts = self.components["Shirt"].found_contours
-        beards = self.components["Beard"].found_contours
+        comp1s = self.components[self.first_component].found_contours
+        comp2s = self.components[self.second_component].found_contours
 
-        for shirt in shirts:
-            for beard in beards:
-                self.obj_vect = shirt['centroid'] - beard['centroid']
+        for comp1 in comp1s:
+            for comp2 in comp2s:
+                self.obj_vect = comp1['centroid'] - comp2['centroid']
                 self.obj_dist = np.linalg.norm(self.obj_vect)
                 self.obj_orientation = np.arctan2(self.obj_vect[0], self.obj_vect[1])
                 self.obj_unit_vector = self.obj_vect / self.obj_dist
-                self.origin = shirt["centroid"]
+                self.origin = comp1["centroid"]
 
                 output = self.match_components(output)
         return output
-
-    def save_debug(self, bgr_image):
-        """
-        Saves an image with progress for debugging
-        :param bgr_image: Image to show data for
-        :return: None
-        """
-        gray = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2GRAY)
-        bgr_image = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-        gray2 = bgr_image.copy()
-        shirt = self.components['Shirt'].found_contours[0]
-        beard = self.components['Beard'].found_contours[0]
-        shirt_center, _ = cv2.minEnclosingCircle(shirt['contour'])
-        bear_center, _ = cv2.minEnclosingCircle(beard['contour'])
-        bgr_image = cv2.circle(bgr_image, tuple(np.uint64(shirt_center)), np.uint64(shirt['size']), [255, 0, 0], 2)
-        bgr_image = cv2.circle(bgr_image, tuple(np.uint64(bear_center)), np.uint64(beard['size']), [255, 0, 0], 2)
-        bgr_image = cv2.line(bgr_image, tuple(np.uint64(beard['centroid'])), tuple(np.uint64(shirt['centroid'])), [0, 255, 0], 2)
-        bgr_image = cv2.line(bgr_image, tuple(np.uint64(beard['centroid'])), tuple(np.uint64(beard['centroid'] + np.array([beard['size'], 0]))), [0, 255, 0], 2)
-        bgr_image = cv2.line(bgr_image, tuple(np.uint64(shirt['centroid'])), tuple(np.uint64(shirt['centroid'] + np.array([shirt['size'], 0]))), [0, 255, 0], 2)
-        beard_ang = np.array([-np.sin(beard['orientation']), -np.cos(beard['orientation'])]) * beard['size']
-        gray2 = cv2.line(gray2, tuple(np.uint64(beard['centroid'])), tuple(np.uint64(shirt['centroid'])), [0, 255, 0], 2)
-        gray2 = cv2.line(gray2, tuple(np.uint64(beard['centroid'])), tuple(np.uint64(beard['centroid'] + beard_ang)), [255, 0, 0], 2)
-
-        cv2.imwrite("circles.jpg", bgr_image)
-        cv2.imwrite("angles.jpg", gray2)

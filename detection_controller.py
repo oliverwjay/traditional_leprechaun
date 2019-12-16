@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from enum import Enum
-from visual_object import Leprechaun
+from visual_object import GenericObject
 import time
 
 
@@ -31,7 +31,7 @@ class DetectionController:
         self.input_mode = InputMode.NONE
         self.interaction_mode = InteractionMode.TEACH_CONTOUR
 
-        self.object = Leprechaun()
+        self.object = GenericObject()
         self.mode = InteractionMode.COMPOSITE  # Track how the user is interacting
         self.selected_component = None  # Track the current
 
@@ -143,10 +143,10 @@ class DetectionController:
         self.hsv_frame = cv2.cvtColor(self.bgr_frame, cv2.COLOR_BGR2HSV)  # Convert to HSV
         self.processed_frame = self.object.components[self.selected_component].process_image(self.hsv_frame)
 
-        # Find leprechaun
+        # Find object
         for component in self.object.components.values():
             component.process_image(self.hsv_frame)
-        with_leprechaun = self.object.find_leprechaun(self.bgr_frame)
+        with_leprechaun = self.object.find_object(self.bgr_frame)
 
         rgb_frame = cv2.cvtColor(with_leprechaun, cv2.COLOR_BGR2RGB)
         rgb_processed = cv2.cvtColor(self.processed_frame, cv2.COLOR_BGR2RGB)
