@@ -87,6 +87,8 @@ class VisualObject:
         Draws contours that match the current object pose
         :return: Image with contours drawn on
         """
+        output = img.copy()
+        found_components = set()
         for component in self.components.values():
             for contour in component.found_contours:
                 invariant_pose = self.get_contour_pose(contour)
@@ -99,8 +101,12 @@ class VisualObject:
                 for exp_pose in component.exp_poses:
                     if max(np.abs(exp_pose - invariant_pose)) < .2:
                         # Match fit
-                        output = cv2.drawContours(img, [contour['contour']], -1, (0, 0, 255), 3)
-        return img
+                        output = cv2.drawContours(output, [contour['contour']], -1, (0, 0, 255), 3)
+                        found_components.add(component)
+        if len(found_components) > 2:  # Several matching components
+            return output
+        else:  # Not enough matching components
+            return img
 
 
 class Leprechaun (VisualObject):

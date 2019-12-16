@@ -199,7 +199,7 @@ class ComponentSample(DataSample):
             cv2.imwrite("all_contours.jpg", with_contours)
 
         # Filter out small contours
-        contours = [contour for contour in contours if cv2.contourArea(contour) > 500]
+        contours = [contour for contour in contours if cv2.contourArea(contour) > 300]
 
         # If there is a model, filter out contours that don't match
         if self.contour is not None:
